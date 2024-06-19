@@ -1,0 +1,82 @@
+#1
+select f.flight_id, f.from_location, f.to_location, d.price 
+from air_flight f,air_flight_details d 
+where f.flight_id = d.flight_id and month(d.flight_departure_date)=4;
+ 
+#2
+select f.flight_id, f.from_location, f.to_location, avg(d.price) as price 
+from air_flight f,air_flight_details d 
+where f.flight_id = d.flight_id group by flight_departure_date, flight_id
+order by flight_id, from_location, to_location;
+
+#3
+ select p.profile_id, concat(p.first_name,',', p.last_name) as customer_name, p.address 
+ from air_passenger_profile p 
+ where profile_id in 
+ (select profile_id from  air_ticket_info right join air_flight 
+ on air_ticket_info.flight_id = air_flight.flight_id
+ where from_location = 'guntur' and to_location = 'hyderabad')
+  order by profile_id;
+
+#4
+ select profile_id from 
+ (SELECT profile_id , count(*) as ticket_count  
+ from air_ticket_info 
+ group by profile_id ) as t
+ where ticket_count = (
+ select max(ticket_count) from
+ (SELECT profile_id , count(*) as ticket_count  
+ from air_ticket_info 
+ group by profile_id ) as t) order by profile_id;
+ 
+ #5
+ select air_flight.flight_id, from_location, to_location, count(ticket_id) as No_of_Tickets
+ from air_flight inner join air_ticket_info on air_flight.flight_id=air_ticket_info.flight_id
+where airline_name="ABC AIRLINES"  group by flight_id order by flight_id asc;
+
+#6 
+select flight_id, count(flight_departure_date) as No_of_Services, sum(price) as Total_Price
+from air_flight_details group by flight_id
+order by Total_Price desc, flight_id desc;
+
+#7
+select flight_id, flight_departure_date, count(profile_id) as No_of_Passengers 
+from air_ticket_info group by flight_id, flight_departure_date
+order by flight_id asc, flight_departure_date asc;
+
+#8
+select profile_id from(
+select profile_id, count(ticket_id) as num_ticket
+from air_ticket_info group by profile_id) as t
+where num_ticket = (
+select min(num_ticket) from (
+select profile_id, count(ticket_id) as num_ticket
+from air_ticket_info group by profile_id) as t
+) order by profile_id asc;
+
+#9
+select profile_id, first_name, mobile_number, email_id from air_passenger_profile
+where profile_id in(
+select profile_id from air_ticket_info inner join air_flight 
+on air_ticket_info.flight_id = air_flight.flight_id 
+where from_location = "GUNTUR" and to_location = "HYDERABAD")
+order by profile_id asc;
+
+#10
+select distinct
+    ap.profile_id,
+    ap.first_name,
+    ap.last_name,
+    ati.flight_id,
+    ati.flight_departure_date,
+    af.departure_time AS actual_departure_time,
+    af.arrival_time AS actual_arrival_time,
+    ADDTIME(af.departure_time, '01:00:00') AS Delayed_Departure_Time,
+    ADDTIME(af.arrival_time, '01:00:00') AS Delayed_Arrival_Time
+from air_ticket_info ati join air_flight af on af.flight_id=ati.flight_id
+join air_passenger_profile ap on ap.profile_id=ati.profile_id
+WHERE
+    af.from_location = 'GUNTUR'
+    AND af.to_location = 'HYDERABAD'
+    AND ati.flight_departure_date = '2013-05-06';
+    
